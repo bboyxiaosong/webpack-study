@@ -1,0 +1,908 @@
+/*
+by 小松  2018.12.5  总结本人有关于 webpack 一些知识点，大神莫喷，忘多多指点
+
+*/
+
+webpack (简单的介绍)；
+
+不同于其他打包工具：
+
+代码分割 
+
+插件系统
+
+模块热更新
+；
+整个项目中有一个loader 的概念，通过loader 处理各种各样的文件  ，不管是  es6 语法 写的 css  less  js json 以及.vue  .react 结尾的和我们自定义的一些文件；定义webpack - 模块的打包器，打包成 浏览器 人事的 css 语言 js 语言,代码分割， 会切分 依赖数， 保持初始化 时间更少,
+
+整合第三方模块库，适合大型项目；和他打包工具不一样；插件系统 代码分割 模块热更新 ，提高开发效率
+
+
+1. 如果是mac 电脑  选择一个文件夹  在文件下建立webpack 项目执行命令 mkdir "你文件的名字" 这个双引号去掉就行，尽量命名为英文，比如 mkdir webpack-demo；
+
+2. 然后cd webpack-demo 进入项目目录初始化 npm init 如果初始化报错 可以加上 sudo npm init  一路回车就行；在本地文件下会出现package.json文件里面有你创建项目的信息；就不一一解释了;
+
+3. 安装webpack, npm install webpack --save-dev;
+
+4. 安装webpack-cli ,npm install -g webpack-cli;安装完成之后可以执行webpack -h;查看webpack帮助信息
+
+5. 这样一个简陋的 webpack 搭建完成 
+
+6. 可以创建一个 js 文件试着打包一下，例如我创建了一个 hello.js，然后 执行命令webpack hello.js -o hello.bundle.js;然后执行成功；
+
+如果有报错；可以借鉴一下
+《----如果按照上面操作；出现报错，看看报错信息，起步的，报错信息一般缺少模块
+
+例如报错信息 缺少 fast-deep-equal   
+
+
+你就可以执行命令   npm install -g fast-deep-equal;全局安装；
+
+如果没有安装成功 执行 npm install fast-deep-equal下载这么模块的依赖---》
+
+如果没有报错；
+打包成功
+
+例子：
+webpack hello.js -o hello.bundle.js
+Hash: f7a142ae144414a8d2ca     =========生成js 哈希值
+Version: webpack 4.26.0        =============webpack的版本号
+Time: 461ms                    =============这次打包所耗费的时间
+Built at: 2018-12-05 14:56:14  ========文件创建时间
+Asset       Size  Chunks             Chunk Names
+hello.bundle.js  930 bytes       0  [emitted]  main
+Entrypoint main = hello.bundle.js
+[0] ./hello.js 0 bytes {0} [built]
+
+
+
+Asset 对应下边的hello.bundle.js 文件名字  ；Size 打包的文件大小 ;Chunks 这次打包的分块，Chunk Names 这次打包的块名称
+解释：
+1.chunks就是代码块的意思，有name的chunk是在entry里配置了name的，那些1，2，3，4啥的应该是用了code splitting配置生成的，数字是chunk的id
+2.多个chunk合在一起就是bundle，一个bundle可以理解为一个大的js打包之后生成的文件，而多个bundle里可能有公共的部分，或者一个bundle里的东西并不需要一次性加载，需要按照路由按需加载，这个时候就需要按需加载，拆分成不同的chunk
+
+ps：摘自网络，’仅个人理解‘：
+
+实际上打包过后生成的文件hello.bundle.js也是一个模块，并且webpack默认为使用CommonJS模块规范
+
+
+-----------------------------------------（二）-------------------------------------两个js
+
+可以重新创建一个 js 例如 world.js  内容  function world(){return {}}
+
+
+然后在 hello.js 进行引用   一下是 hello.js
+
+require ('./world.js')
+function hello(str){
+	console.log(str)
+}
+hello(str);
+
+
+然后执行  webpack hello.js -o hello.bundle.js 进行打包
+
+Hash: 4a447af4b94bb837a2e3
+Version: webpack 4.26.0
+Time: 422ms
+Built at: 2018-12-05 15:53:28
+          Asset       Size  Chunks             Chunk Names
+hello.bundle.js  985 bytes       0  [emitted]  main
+Entrypoint main = hello.bundle.js
+[0] ./hello.js 75 bytes {0} [built]
+[1] ./world.js 32 bytes {0} [built]
+
+生成了两个代码块
+
+------------------------------------（三）-----------------------------创建css 进行打包
+
+style.css  内容随便写点
+{
+ marigin:0;padding:0;
+}
+
+然后在hello.js 中引入  
+
+require ('./style.css');
+
+然后执行  webpack hello.js -o hello.bundle.js 进行打包  会出现报错,需要安装loader,天然不支持css 处理；
+
+npm install css-loader style-loader --save-dev
+
+
+安装完成之后 执行打包  可能还会报错 
+
+这时候需要指定 css-loader  require ('style-loader!css-loader!./style.css');
+
+
+就是说 引入这个文件之前需要进行 css-loader 以及 style-loader的处理
+
+然后执行 打包命令 
+
+Hash: 7dcea21e3441c2ce841d
+Version: webpack 4.26.0
+Time: 994ms
+Built at: 2018-12-05 16:15:09
+          Asset      Size  Chunks             Chunk Names
+hello.bundle.js  6.82 KiB       0  [emitted]  main
+Entrypoint main = hello.bundle.js
+[0] ./hello.js 128 bytes {0} [built]
+[1] ./world.js 32 bytes {0} [built]
+[2] ./node_modules/style-loader!./node_modules/css-loader!./style.css 1.04 KiB {0} [built]
+[3] ./node_modules/css-loader!./style.css 231 bytes {0} [built]
+    + 3 hidden modules
+
+
+css 引入 也可以执行命令行引入 使css 处理相应的loader；用到了 --module-bind 模块
+
+webpack hello.js -o hello.bundle.js --module-bind 'css=style-loader!css-loader'
+
+
+执行完成这段命令之后 require ('./style.css'); hello.js就可以这样引用了
+
+
+webpack hello.js -o hello.bundle.js --module-bind 'css=style-loader!css-loader' --watch 实现自动打包
+
+//试着改变css 样式 以及js 弹框内容 然后刷新页面实现自动打包了
+
+webpack hello.js -o hello.bundle.js --module-bind 'css=style-loader!css-loader' --progress 打包过程
+
+webpack hello.js -o hello.bundle.js --module-bind 'css=style-loader!css-loader' --display-modules 打包的模块
+
+
+webpack hello.js -o hello.bundle.js --module-bind 'css=style-loader!css-loader' --watch --progress --display-reasons 为什么打包这个模块
+
+
+=============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+========================================（二）使用场景-----自动生成页面-------------------------------------------------------------
+重新初始化 一个新项目
+
+mkdir webpack-demo1
+
+cd webpack-demo1
+
+npm init
+
+npm install webpack --save-dev
+
+npm install -g webpack-cli
+
+npm install css-loader style-loader --save-dev  // 安装css处理loader
+完成之后
+新建 index.html
+新建文件夹  mkdir dist
+mkdir src -- cd src -- mkdir script ,mkdir style  然后 cd .. 回到根目录
+
+
+然后创建 webpack.fonfig.js 为什么要创建呢  因为 我们直接使用webpack 这个命令的话 ，webpack 会在项目的根目录去寻找
+webpack.config.js 文件把它作为默认的配置去运行，这个时候我其实不需要指定其他的参数 我们也可以 通过 webpack --config 把其他文件作为
+默认的参数
+
+webpack.config.js 的内容 
+
+var path = require('path');
+
+module.export = {
+	entry:'./src/script/main.js',	//这个entry 代表我们打包入口是在那个文件开始
+	output:{
+		path:path.resolve(__dirname,"dist"),
+		filename:'bundle.js' //打包以后的文件名
+		
+	},
+}
+
+然后在 src 文件下 script 创建 main.js  里边内容 function helloWorld(){}  ；ps ：随便写个函数就行
+
+然后  执行命令  webpack  打包成功
+
+
+Hash: 732204383548d25739e3
+Version: webpack 4.26.0
+Time: 119ms
+Built at: 2018-12-05 17:09:53
+    Asset      Size  Chunks             Chunk Names
+bundle.js  3.83 KiB    main  [emitted]  main
+Entrypoint main = bundle.js
+[./src/script/main.js] 28 bytes {main} [built]
+
+
+ps: 假如你改了 webpack.config.js 的名字 你可以通过运行 webpack --config  名字     就是改过之后的名字 （这种情况一般不会改）；
+
+
+
+假如 加一些参数    看见打包的过程    打包出出来字体是彩色的  为什么大打包  打包了那些模块
+
+
+我们可以在--根目录--文件名字-- package.json 里边  
+
+"scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "webpack": "webpack --config webpack.config.js --progress --dispaly-modules --colors --dispaly-reason"   //你要加的代码
+  }, 
+
+
+
+CLi 指的就是 webpack.config.js 的配置
+
+
+如果在node 中调用可以作为一个对象传给 webpack     webpack({},callback);  
+
+entry:'./src/script/main.js', //处理单个js
+
+entry:['./src/script/main.js','./src/script/a.js'], //第一种情况输入处理多个平行的，不同的js
+
+多个页面应用
+
+entry:{
+		main:'./src/script/main.js',
+		a:'./src/script/a.js',
+		
+	},
+
+
+
+// webpack.config.js 版本1
+
+
+var path = require('path');
+//var htmlWebpackPlugin = require('html-webpack-plugin');//引入插件自动生产htmlcnpm install html-webpack-plugin --save-dev
+module.exports = {
+	//entry:'./src/script/main.js',//单个js 文件
+	//entry:['./src/script/main.js','./src/script/a.js'], //多个js情况输入
+	entry:{
+		main:'./src/script/main.js',
+		a:'./src/script/a.js'
+	},
+	
+
+	output:{
+		path:path.resolve(__dirname,"dist"),
+		//filename:'bundle.js' //第一种情况输出
+		//filename:'[name]-[hash].js'
+		filename:'[name]-[chunkhash].js' // 每次打包生成的哈希值都不一样，index.html 引入的局势bundle.js 不能每次都改吧
+		
+	},
+	mode:'development',
+
+	
+}
+
+2 (问题--)  每次打包生成的哈希值都不一样，index.html 引入的局势bundle.js 不能每次都改吧
+// 所以借助webpack  插件的引用
+
+使用之前先安装
+
+cnpm install html-webpack-plugin --save-dev
+
+安装完成之后 在webpack.config.js 中使用
+
+var htmlWebpackPlugin = require('html-webpack-plugin');//引入插件自动生产htmlcnpm install html-webpack-plugin --save-dev
+
+	在mode 的同级目录下
+
+        plugins:[
+		new htmlWebpackPlugin()
+
+	 ]
+	配置下 重新 运行 这个插件 在 dist 目录下就会自动生成一个 index.html 但是 他与根目录下的html 是没有任何联系的
+	
+ps :可以根据目录的下的index.html 为模板 生成这个html 配置如下
+
+
+plugins:[
+		new htmlWebpackPlugin({
+			template:'index.html',
+			
+		})
+
+	]
+这样的话就关联上了；更改根目录的index.html  重新运行打包就会关联
+
+但是目前 生成的文件都在 dist 目录下  ，可以使js 与index.html 分离， 可以在 output 下filename:'js/[name]-[chunkhash].js';
+
+
+在 plugins：[]
+
+
+plugins:[
+		new htmlWebpackPlugin({
+			filename:'index-[hash].html',//每次生成带哈希值得 html可以改成 'index.html'
+			template:'index.html',//根据那个模板
+
+			indject:'head',  // 生成的script 在head里边的
+
+			title:'this is good'  //这个在标题在 根目录的index.html里边
+
+
+		})
+
+	]
+
+
+2.
+把一部分js引入到head里边，一部分js 引入到 body里边，在根目录下index.html 修改
+
+<html>
+<head>
+	<meta charset="utf-8">
+	<title><%=htmlWebpackPlugin.options.title %></title> //支持模板语法
+	<script type="text/javascript" src="<%=htmlWebpackPlugin.files.chunks.main.entry%>"></script>  //这样可以使main。js
+与a。js分离不会默认插入 ：config.js 里边这样做 indject:'head',  // 生成的script 在head里边的 还有下边的
+</head>
+<body>
+	<script type="text/javascript" src="bundle.js"></script>
+<!-- dasd -->
+	<%=htmlWebpackPlugin.options.date%>
+
+	<% for (var key in htmlWebpackPlugin){%>
+		<%=key%>
+	<%}%>
+
+	<% for (var key in htmlWebpackPlugin.files){%>
+		<%=key%>:<%=htmlWebpackPlugin.files[key]%>
+	<%}%>
+
+	 <% for (var key in htmlWebpackPlugin.options){%>
+		<%=key%>:<%=htmlWebpackPlugin.options[key]%>
+	 <%}%>
+	<script type="text/javascript" src="<%=htmlWebpackPlugin.files.chunks.main.a%>"></script>
+</body>
+</html>
+
+// 
+output:{
+		path:path.resolve(__dirname,"dist"),
+		
+		
+		filename:'[name]-[chunkhash].js'
+		publicPath:'http://cdn.com',//占位符要上线的话   --打包之后生成正式链接
+		
+	},
+
+//全部要的  webpack.config.js 结构
+
+
+var path = require('path');
+var htmlWebpackPlugin = require('html-webpack-plugin');//引入插件自动生产htmlcnpm install html-webpack-plugin --save-dev
+module.exports = {
+	// entry:['./src/script/main.js','./src/script/a.js'], //第一种情况输入
+
+	entry:{
+		main:'./src/script/main.js',
+		a:'./src/script/a.js',
+		b:'./src/script/b.js',
+		c:'./src/script/c.js',
+	},
+	output:{
+		path:path.resolve(__dirname,"dist"),
+		//filename:'bundle.js' //第一种情况输出
+		filename:'js/[name]-[chunkhash].js',
+		publicPath:'http://cdn.com',//占位符要上线的话
+	},
+	mode:'development',
+
+	plugins:[
+		new htmlWebpackPlugin({
+			//filename:'index-[hash].html',
+			filename:'index.html',
+			template:'index.html',
+			inject:false,
+			title:'webpack is good',
+			date:new Date(),
+			minify:{//要上线代码处理的  
+				removeComments:true,//删除注释
+				collapseWhitespace:true,//删除空格
+			}
+
+		}),
+		new htmlWebpackPlugin({
+
+		})
+
+	]
+}
+
+	
+
+
+=============================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================================
+========================================（三）使用场景-----loader的使用-------------------------------------------------------------
+
+使用babel-loader   转换es6
+一、babel
+1、babel是一个转换编译器,它能将ES6转换成可以在浏览器中运行的代码
+2、安装babel
+终端目标文件夹输入：npm install --save-dev babel-loader babel-core
+3、loader:'babel-loader'可以正常运行，视频中的loader:'babel'不能正常运行。
+4、babel的loader是一个非常耗时的转换。
+
+sudo npm install --save-dev babel-loader babel-core
+
+sudo cnpm install --save-dev babel-preset-latest  // 
+
+babel-preset-latest安装这个是处理css  ，三个地方可以指定它
+（1）
+在webpack.config.js 
+
+module:{
+		loaders :[
+			{
+				test:/\,js$/,
+				loader:'babel',
+				query:{
+					presets:['latest']
+				}
+			}
+		]
+	},
+（2）
+还可以在项目根目录建立 .babelrc 文件 内容为{'presets':['es2015']}
+
+
+（3）在根目录的 package.json 中指定
+
+ // "babel": {
+  //   "presets": [
+  //     "latest"
+  //   ]
+  // },
+
+
+新版本已经不支持loaders了
+
+babel-loader@7版本
+
+npm install --save-dev babel-loader@7
+
+module:{
+    rules:[
+        {
+            test:'/\.js$/,
+            use:{
+                loader:'babel-loader',
+                options:{
+                    "presets":['latest']
+                }
+            }
+        }
+    ]
+}最新版本的module引入loader的方式为：rules而非loaders。module:{
+rules:[
+{
+test:/\.js$/,
+loader:'babel-loader'
+}
+]
+}
+
+module:{
+		rules :[
+			{
+				test:/\,js$/,
+				loader:'babel-loader',
+				options:{
+                    presets:['latest']
+                }
+			}
+		]
+	},
+ps:
+module中loader的设置:（
+注意，在webpack 3.11.0中：
+1- query已经变成了options
+2- loader的值：'babel' 已经不能省略-loader的后缀，因此应写为"babel-loader"
+）
+loader其他参数讲解：exclude（设置不需要处理的文件的目录）、include（需要使用该loader去处理的文件目录，只打包该目录下的文件）、loaders(loaders是数组类型的一连串loader，不再是单个字符串类型的单个loader)
+目前4.0的版本，从安装到配置 好多都不一样的，这个modue我是这样写的：
+module:{
+		rules :[
+			{
+				test:/\,js$/,
+				loader:'babel-loader',
+				exclude: __dirname + '/node_modules/',  //设置不打包文件夹
+				include:__dirname + '/src/', //设置打包的文件夹
+				options:{
+                    presets:['latest']
+                }
+			}
+		]
+	},
+
+
+
+exclude: path.resolve(__dirname, 'node_modules'),
+include:/\.src/
+这样比两个都用path.resolve速度快上10ms
+
+
+（#########）接下来，再装一个插件  npm install autoprefixer --save-dev 来处理浏览器的语言
+
+
+（#########）接下来，再装一个插件  npm install postcss-loader --save-dev 来处理浏览器的语言
+css 目录
+
+@import './flex.css';
+body{
+	margin: 0;
+	padding: 0;
+	background-color: #ccc;
+}
+
+module:{
+		rules :[
+			{
+				test:/\,js$/,
+				loader:'babel-loader',
+				include:path.resolve(__dirname , 'src'),
+				exclude: path.resolve(__dirname , 'node_modules'),
+				options:{
+                    presets:['latest']
+                }
+			},
+			{
+				test:/\.css$/,
+				loader:'style-loader!css-loader?importLoaders=1!postcss-loader!'
+			}
+		]
+	},
+
+
+
+如果要处理css 里边引入的css 需要配下参数  如上：importLoaders=1
+
+（#########）接下来，再装一个插件  less
+
+npm install less-loader --save-dev 来处理浏览器的语言
+
+
+sudo cnpm i less --save-dev
+
+（#########）接下来，再装一个插件sass
+npm install sass-loader --save-dev 来处理浏览器的语言
+
+sass的坑
+
+ cnpm install node-sass --save-dev
+
+
+	{
+              test:/\.less$/,
+              loader:'style-loader!css-loader!postcss-loader!less-loader'
+              
+            },
+            {
+              test:/\.scss$/,
+              loader:'style-loader!css-loader!postcss-loader!sass-loader'
+            }
+
+(*************************************************************)
+
+var htmlWebpackPlugin=require('html-webpack-plugin');
+var webpack=require('webpack');
+var path=require('path');
+module.exports={
+    context:__dirname,
+    entry:'./src/app.js',
+    output:{
+        path:path.resolve(__dirname,'./dist'),
+        filename:'js/[name].bundle.js'
+    },
+    module:{
+      rules:[
+          {
+              test:/\.js$/,
+              loader:'babel-loader',
+              exclude:path.resolve(__dirname,'/node_modules/'),//已经引用过的，已经打包过的文件
+              include:path.resolve(__dirname,'/src/'),
+              options:{
+                    presets:['latest']
+                }
+          },
+          {
+              test:/\.css$/,
+              use:[
+                  {
+                      loader:'style-loader'
+                  },
+                  {
+                      loader:'css-loader',
+                      options:{
+                          importLoaders:1
+                      }
+                  },
+                  {
+                      loader:'postcss-loader'
+                  }
+              ]
+          },
+          {
+              test:/\.less$/,
+              use:[
+                  'style-loader',
+                  'css-loader',
+                  'postcss-loader',
+                  'less-loader'
+              ]
+          },
+          {
+              test:/\.scss$/,
+              use:[
+                  'style-loader',
+                  'css-loader',
+                  'postcss-loader',
+                  'sass-loader'
+              ]
+          }
+      ]
+    },
+    plugins:[
+        new htmlWebpackPlugin({
+            filename:'index.html',
+            template:'index.html',
+            inject:'body'
+        }),
+        new webpack.LoaderOptionsPlugin({
+            options:{
+                postcss:function(){
+                    return [
+                        require('autoprefixer')({
+                            broswers:['last 5 versions']
+                        })
+                    ]
+                }
+            }
+        })
+    ]
+};
+（**************************************************************************）
+var path = require('path');
+var htmlWebpackPlugin = require('html-webpack-plugin');//引入插件自动生产htmlcnpm install html-webpack-plugin --save-dev
+module.exports = {
+	entry:'./src/app.js',//单个js 文件
+	//entry:['./src/script/main.js','./src/script/a.js'], //多个js情况输入
+	// entry:{
+	// 	main:'./src/script/main.js',
+	// },
+	output:{
+		path:path.resolve(__dirname,"dist"),
+		//filename:'bundle.js' //第一种情况输出
+		//filename:'[name]-[hash].js'
+		filename:'js/[name].bundle.js'
+	},
+	mode:'development',
+
+	module:{
+		rules :[
+			{
+				test:/\,js$/,
+				loader:'babel-loader',
+				include:path.resolve(__dirname , 'src'),
+				exclude: path.resolve(__dirname , 'node_modules'),
+				options:{
+                    presets:['latest']
+                }
+			},
+			{
+				test:/\.css$/,
+				loader:'style-loader!css-loader?importLoaders=1!postcss-loader'
+			},
+			{
+              test:/\.less$/,
+              loader:'style-loader!css-loader!postcss-loader!less-loader'
+              
+            },
+            {
+              test:/\.scss$/,
+              loader:'style-loader!css-loader!postcss-loader!sass-loader'
+            }
+
+		]
+	},
+
+
+	plugins:[
+		new htmlWebpackPlugin({
+			filename:'index.html',
+			template:'index.html',
+			indject:'body',
+
+			title:'this is good'
+
+
+		})
+
+	]
+}
+*************************************************************************************
+
+
+sudo cnpm install html-loader --save-dev 
+
+
+##处理 html模板 
+
+
+app.js
+
+
+import './css/common.css';
+
+import Layer from './components/layer/layer.js';
+const App = function  () {
+	console.log(layer)
+	var dom = document.getElementById('#app');
+	var layer = new Layer();
+	dom.innerHTML = layer.tpl;
+}
+
+new App();
+
+
+
+#####目录模板
+<html>
+<head lang="en">
+	<meta charset="utf-8">
+	<title><%=htmlWebpackPlugin.options.title %></title>
+</head>
+<body>
+	<div id="app"></div>
+</body>
+</html>
+
+##layer.js内容
+
+import tpl from './layer.html';
+import './layer.less';
+function layer(){
+	return {
+		name:'layer',
+		tpl:tpl
+	}
+}
+export default layer;
+
+
+
+webpack.config.js 配置
+{
+	test:/\.html$/,
+	loader: 'html-loader'
+},
+
+
+
+例如 ejs 模板
+
+
+
+ 需要什么模板就安装什么模板
+
+
+现在需要的是 ejs 模板 就在temail 命令行安装这个loader
+
+sudo cnpm install ejs-loader --save-dev
+
+
+
+然后在 webpack.config.js 配置里边配置规则
+
+
+{
+	test:/\.tpl$/,
+	loader: 'ejs-loader'
+}
+
+那么 layer.js 里边 import tpl from './layer.tpl';
+
+比较流行的  模板 jsx vue  尤玉溪大神 在vue里边已经支持了 jsx 的模板
+
+******************************************************************************************************
+最后一章节  （imgage ） 图片处理；
+
+引入图片就必须知道需要什么样的loader 处理图片
+
+sudo cnpm install file-loader --save-dev   
+
+完成之后webpack.fonfig.js 配置一下
+{
+	test:/\.(png|jpg|gif|svg)$/i,
+	loader:'file-loader'
+}
+
+在less下引入
+
+.layer{
+	width:600px;
+	height:200px;
+	div{
+		width:400px;
+		height:100px;
+		background:url('../../assets/bj.png');
+
+	}
+}
+
+如果在根目录下引入
+
+<img src="src/asstes/bj.png"/> 这样也会被处理
+
+如果写在模板里边
+
+引入相对路径会被报错
+
+<img src="src/asstes/bj.png"/>
+
+
+就得这样写 
+
+<img src="${require(../../assets/bj.png)}"/>
+
+更改打包之后的路径
+
+options:{
+	limit: 10000,
+	name: 'assets/[name].[hash:5].[ext]'
+ }
+
+还有一个处理图片的loader
+
+sudo cnpm install url-loader --save-dev
+
+{
+	test:/\.(png|jpg|gif|svg)$/i,
+	loader:'url-loader',
+	options:{
+		limit: 10000,
+		name: 'assets/[name].[hash:5].[ext]'
+     }
+}
+
+还有一个压缩图片的loader
+
+sudo cnpm install image-webpack-loader --save-dev
+
+这样配置有问题  1 2 配置报错
+(1)
+{
+	test:/\.(png|jpg|gif|svg)$/i,
+				
+	loaders:[
+		'url-loader?limit=1000&name=assets/[name]-[hash:5].[ext]',
+		'image-webpack'
+	]
+}
+(2)
+{
+	test:/\.(png|jpg|gif|svg)$/i,
+	use:[
+		{
+			loader:'url-loader',
+			options:{
+				limit: 10000,
+				name: 'assets/[name].[hash:5].[ext]'
+			}
+
+		},
+		{
+			loader:'image-webpack'
+		}
+
+	]
+				
+				
+}
+（3 虽然没有报错但是 没压缩）
+
+{
+				test:/\.(png|jpg|gif|svg)$/i,
+				loaders: [
+					"url-loader?limit=10000&name=assets/[name].[ext]",
+					{ 
+						loader: 'image-webpack-loader',
+						options: {
+							optipng: { optimizationLevel: 7 },
+						}
+					}
+				]
+			}
